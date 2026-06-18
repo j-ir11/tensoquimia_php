@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import useStore from '../../store/useStore';
-import { FileText, Loader2, FileDown, Search, Plus, Trash2, Layers } from 'lucide-react';
+import { FileText, Loader2, FileDown, Search, Plus, Trash2, Layers, Eye, X } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
@@ -14,8 +14,11 @@ const ReporteIndividualViewer = () => {
   const [loading, setLoading] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
-  // 🛒 ESTADO PARA EL CARRITO DE REPORTES MULTIPLES
+  // 🛒 COLA DE DESCARGA MULTIPLE
   const [listaDescarga, setListaDescarga] = useState([]);
+
+  // 👁️ ESTADO PARA LA VISTA PREVIA (MODAL)
+  const [reportePreview, setReportePreview] = useState(null);
 
   // Filtrado dinámico de la lista de productos
   const piList = useMemo(() => {
@@ -45,11 +48,10 @@ const ReporteIndividualViewer = () => {
     getVersions();
   }, [selectedProductId, loadVersiones]);
 
-  // 📥 AÑADIR REPORTE AL BUNDLE DE DESCARGA
+  // 📥 AÑADIR REPORTE AL BUNDLE
   const agregarALista = async () => {
     if (!selectedVersionId) return;
 
-    // Verificar si ya está agregado para no duplicar la misma versión exacta
     if (listaDescarga.some(item => item.id_version === selectedVersionId)) {
       alert("Esta versión de reporte ya está en la lista de descarga.");
       return;
@@ -72,9 +74,10 @@ const ReporteIndividualViewer = () => {
     }
   };
 
-  // 🗑️ QUITAR REPORTE DE LA LISTA
+  // 🗑️ QUITAR REPORTE
   const eliminarDeLista = (idVersion) => {
     setListaDescarga(listaDescarga.filter(item => item.id_version !== idVersion));
+    if (reportePreview?.id_version === idVersion) setReportePreview(null);
   };
 
   // 🚀 GENERAR UN SOLO PDF CON TODOS LOS REPORTES (UNO POR PÁGINA)
@@ -87,7 +90,6 @@ const ReporteIndividualViewer = () => {
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
 
-      // Recorremos secuencialmente los contenedores ocultos que renderizaremos abajo
       for (let i = 0; i < listaDescarga.length; i++) {
         const item = listaDescarga[i];
         const element = document.getElementById(`reporte-render-${item.id_version}`);
@@ -117,7 +119,6 @@ const ReporteIndividualViewer = () => {
           const imgHeight = (canvas.height * pdfWidth) / canvas.width;
           const positionY = Math.max(0, (pdfHeight - imgHeight) / 2);
 
-          // Si no es la primera página, añadimos una nueva hoja en blanco al PDF
           if (i > 0) {
             pdf.addPage('l', 'mm', 'a4');
           }
@@ -209,22 +210,31 @@ const ReporteIndividualViewer = () => {
       {listaDescarga.length > 0 && (
         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
           <h2 className="text-sm font-black text-slate-700 uppercase tracking-wider mb-4 flex items-center gap-2">
-            Documentos en la cola ({listaDescarga.length})
+            Documentos en la cola ({listaDescarga.length}) <span className="text-[10px] text-slate-400 lowercase italic">(Haz clic en el ojo para ver vista previa)</span>
           </h2>
           <div className="divide-y divide-slate-100 max-h-60 overflow-y-auto mb-6">
             {listaDescarga.map((item) => (
               <div key={item.id_version} className="py-3 flex justify-between items-center text-xs font-bold uppercase">
                 <div className="flex items-center gap-3">
                   <span className="bg-emerald-100 text-emerald-800 px-2 py-1 rounded font-mono">{item.master.clave_producto}</span>
-                  <span className="text-slate-600 font-normal truncate max-w-md">{item.master.descripcion_producto}</span>
+                  <span className="text-slate-600 font-normal truncate max-w-xs md:max-w-md">{item.master.descripcion_producto}</span>
                   <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-[10px]">v{item.version_numero}</span>
                 </div>
-                <button 
-                  onClick={() => eliminarDeLista(item.id_version)}
-                  className="text-red-500 hover:text-red-700 p-2 transition-all"
-                >
-                  <Trash2 size={16} />
-                </button>
+                <div className="flex items-center gap-1">
+                  <button 
+                    onClick={() => setReportePreview(item)}
+                    className="text-slate-500 hover:text-indigo-600 p-2 transition-all flex items-center gap-1 text-[11px]"
+                    title="Ver vista previa"
+                  >
+                    <Eye size={16} />
+                  </button>
+                  <button 
+                    onClick={() => eliminarDeLista(item.id_version)}
+                    className="text-red-400 hover:text-red-600 p-2 transition-all"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -240,7 +250,143 @@ const ReporteIndividualViewer = () => {
         </div>
       )}
 
-      {/* 🖨️ CONTENEDORES OCULTOS PARA RENDERIZAR EN EL CANVAS */}
+      {/* 👁️ VENTANA MODAL DE VISTA PREVIA (POP-UP INTERACTIVO) */}
+      {reportePreview && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex justify-center items-center p-4">
+          <div className="bg-slate-100 w-full max-w-6xl rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
+            {/* CABECERA DEL MODAL */}
+            <div className="bg-white px-6 py-4 border-b border-slate-200 rounded-t-2xl flex justify-between items-center">
+              <div className="flex items-center gap-2 font-black text-slate-800 text-xs uppercase tracking-wider">
+                <Eye className="text-indigo-500" size={18} /> 
+                Vista Previa Impresión: {reportePreview.master.clave_producto} (v{reportePreview.version_numero})
+              </div>
+              <button 
+                onClick={() => setReportePreview(null)}
+                className="text-slate-400 hover:text-slate-600 p-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg transition-all"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* CONTENIDO SCROLLABLE DEL REPORTE EXACTO */}
+            <div className="p-6 overflow-auto flex-1 flex justify-center">
+              <div 
+                className="bg-white p-[15mm] w-[297mm] shadow-md border border-slate-300 font-sans relative"
+                style={{ color: '#000000', backgroundColor: '#ffffff' }}
+              >
+                <style>{`
+                  .excel-table-pv { border: 2px solid #000000; width: 100%; border-collapse: collapse; background-color: #ffffff; }
+                  .excel-table-pv th, .excel-table-pv td { border: 1px solid #000000; padding: 6px 8px; font-size: 11px; color: #000000 !important; }
+                  .excel-table-pv th { font-weight: bold; background-color: #ffffff; }
+                  .bg-gray-excel-pv { background-color: #f2f2f2 !important; }
+                  .bg-green-excel-pv { background-color: #92d050 !important; }
+                  .text-blue-excel-pv { color: #1e40af !important; }
+                `}</style>
+
+                <div className="space-y-4 relative">
+                  <div className="absolute top-0 left-0 text-[10px] font-bold text-slate-600 uppercase">
+                    Fecha de Emisión: {getFormattedDate()}
+                  </div>
+
+                  <h2 className="text-center font-bold text-sm uppercase mb-6" style={{ color: '#000000' }}>
+                    Tabla de Operaciones por Producto
+                  </h2>
+
+                  <div className="flex justify-end items-center gap-4 text-[11px] font-bold">
+                    <span style={{ color: '#000000' }}>TIPO DE CAMBIO</span>
+                    <div className="border border-black px-4 py-1 w-24 text-center" style={{ color: '#000000' }}>$ {Number(reportePreview.master.tc_valor).toFixed(2)}</div>
+                  </div>
+
+                  <div className="flex items-stretch text-[12px] font-bold" style={{ color: '#000000' }}>
+                    <div className="border-2 border-black p-2 w-28 text-center">{reportePreview.master.clave_producto}</div>
+                    <div className="border-2 border-black border-l-0 p-2 flex-1 uppercase">{reportePreview.master.descripcion_producto}</div>
+                    <div className="border-2 border-black border-l-0 bg-green-excel-pv p-2 w-16 text-center">$</div>
+                    <div className="border-2 border-black border-l-0 bg-green-excel-pv p-2 w-28 text-right">
+                      {Number(reportePreview.master.costo_final).toFixed(2)}
+                    </div>
+                    <div className="border-2 border-black border-l-0 bg-gray-excel-pv p-2 w-10 text-center text-[10px]">M.N</div>
+                    <div className="border-2 border-black border-l-0 bg-gray-excel-pv p-2 w-24 text-right">
+                      $ {Number(reportePreview.master.costo_final / (reportePreview.master.tc_valor || 1)).toFixed(2)}
+                    </div>
+                    <div className="border-2 border-black border-l-0 bg-gray-excel-pv p-2 w-10 text-center text-[10px]">USD</div>
+                  </div>
+
+                  <table className="excel-table-pv">
+                    <thead>
+                      <tr>
+                        <th className="w-24">Clave</th>
+                        <th className="w-24 text-center">Porcentaje</th>
+                        <th>Descripción</th>
+                        <th className="w-24">Costo</th>
+                        <th className="w-16">Moneda</th>
+                        <th className="w-24">Costo Pesos</th>
+                        <th className="w-28 bg-gray-excel-pv text-center">Costo Final M.N</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {reportePreview.ingredientes.map((ing, idx) => {
+                        const porc = Number(ing.porcentaje) || 0;
+                        const cBase = Number(ing.costo_base_unitario) || 0;
+                        const tc = Number(reportePreview.master.tc_valor) || 1;
+                        const cPesos = ing.moneda_base === 'USD' ? cBase * tc : cBase;
+                        const cFinal = cPesos * (porc / 100);
+
+                        return (
+                          <tr key={idx}>
+                            <td className="text-center font-mono">{ing.clave_producto}</td>
+                            <td className="text-center font-bold">{porc.toFixed(2)}%</td>
+                            <td className="uppercase">{ing.descripcion_producto}</td>
+                            <td className="text-right">$ {cBase.toFixed(2)}</td>
+                            <td className="text-center">{ing.moneda_base}</td>
+                            <td className="text-right" style={ing.moneda_base === 'USD' ? { color: '#059669', fontWeight: 'bold' } : { color: '#000000' }}>
+                              $ {cPesos.toFixed(2)}
+                            </td>
+                            <td className="text-right font-bold bg-gray-excel-pv">$ {cFinal.toFixed(2)}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+
+                  <div className="flex justify-end pt-2">
+                    <div className="w-[480px]">
+                      <table className="excel-table-pv border-t-0">
+                        <tbody>
+                          <tr>
+                            <td className="text-right font-bold uppercase w-48">Total %</td>
+                            <td className="text-center font-bold w-24">100.00%</td>
+                            <td className="bg-gray-excel-pv font-bold text-center w-24 uppercase">Costo</td>
+                            <td className="text-right font-bold w-12 text-[9px]">M.N.</td>
+                            <td className="text-right font-bold w-24">
+                              $ {Number(reportePreview.master.costo_final - reportePreview.master.factor_proceso).toFixed(2)}
+                            </td>
+                          </tr>
+                          <tr>
+                            <td colSpan={2} className="border-0"></td>
+                            <td className="bg-gray-excel-pv font-bold text-center italic text-blue-excel-pv font-black">FP</td>
+                            <td className="text-right font-bold text-[9px] text-blue-excel-pv">$</td>
+                            <td className="text-right font-bold text-blue-excel-pv underline">
+                              {Number(reportePreview.master.factor_proceso || 0).toFixed(2)}
+                            </td>
+                          </tr>
+                          <tr className="border-t-2 border-black">
+                            <td colSpan={2} className="border-0"></td>
+                            <td className="bg-gray-excel-pv font-bold text-center uppercase font-black">Costo Total</td>
+                            <td className="text-right font-bold text-[9px]">M.N.</td>
+                            <td className="text-right font-bold text-sm">$ {Number(reportePreview.master.costo_final).toFixed(2)}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 🖨️ CONTENEDORES INVISIBLES EN SEGUNDO PLANO PARA HTML2CANVAS */}
       <div className="absolute left-[-9999px] top-0 bg-slate-900 pointer-events-none">
         {listaDescarga.map((reportData) => (
           <div 
