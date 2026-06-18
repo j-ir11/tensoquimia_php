@@ -1,4 +1,4 @@
-FROM php:8.2-apache
+FROM php:8.3-apache
 
 # Instalar extensiones necesarias para Laravel y MySQL
 RUN apt-get update && apt-get install -y \
