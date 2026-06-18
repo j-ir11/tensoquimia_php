@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import axios from 'axios';
 
 
-const API_URL = 'http://127.0.0.1:8000/api';
+const API_URL = 'https://tensoquimia-php.onrender.com/api';
 
 // 1. Instanciar Axios con la configuración estática base
 const apiInstance = axios.create({ 
