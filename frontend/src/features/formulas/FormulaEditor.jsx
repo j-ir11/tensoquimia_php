@@ -263,10 +263,20 @@ const FormulaEditor = () => {
             </thead>
             <tbody className="divide-y">
               {productos
-                .filter((p) => p.tipo_producto === "PI" && p.descripcion_producto.toLowerCase().includes(query.toLowerCase()))
+                .filter(
+                  (p) =>
+                    (p.tipo_producto === "PI" || p.tipo_producto === "PT") &&
+                    p.descripcion_producto.toLowerCase().includes(query.toLowerCase())
+                )
                 .map((p) => (
                   <tr key={p.id_producto} className="hover:bg-slate-50 transition-colors">
-                    <td className="p-4 text-center font-mono font-bold text-slate-400">{p.clave_producto}</td>
+                    <td className="p-4 text-center font-mono font-bold text-slate-400">
+                      {p.clave_producto}
+                      {/* Opcional: Una pequeña etiqueta visual para distinguir el tipo de producto en la lista */}
+                      <span className={`ml-2 block text-[8px] tracking-widest uppercase font-sans ${p.tipo_producto === 'PT' ? 'text-indigo-500' : 'text-emerald-500'}`}>
+                        [{p.tipo_producto}]
+                      </span>
+                    </td>
                     <td className="p-4 font-bold uppercase text-slate-700">{p.descripcion_producto}</td>
                     <td className="p-4 text-right">
                       <button onClick={() => setTarget(p)} className="bg-[#0f172a] text-emerald-400 px-4 py-2 rounded text-[10px] font-black uppercase hover:bg-black transition-all italic">
