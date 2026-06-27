@@ -167,26 +167,35 @@ const ReporteColectivoViewer = () => {
 
       {reportes.length > 0 && !loading && (
         <div className="bg-slate-200 p-8 overflow-x-auto">
-          <div id="reporte-colectivo-container" className="bg-white p-[15mm] mx-auto w-[210mm] shadow-2xl relative">
+          {/* SE QUITA shadow-2xl PORQUE LOS SOMBREADOS MODERNOS USAN OKLCH */}
+          <div 
+            id="reporte-colectivo-container" 
+            className="mx-auto w-[210mm] relative"
+            style={{ backgroundColor: '#ffffff', color: '#000000', padding: '15mm' }}
+          >
             <style>{`
-              .resumen-table { border: 2px solid black; width: 100%; border-collapse: collapse; }
-              .resumen-table th, .resumen-table td { border: 1px solid black; padding: 12px 10px; font-size: 12px; color: black; }
+              .resumen-table { border: 2px solid #000000; width: 100%; border-collapse: collapse; }
+              .resumen-table th, .resumen-table td { border: 1px solid #000000; padding: 12px 10px; font-size: 12px; color: #000000; }
               .header-gray { background-color: #f2f2f2 !important; font-weight: bold; text-align: center; text-transform: uppercase; }
               .bg-green-excel { background-color: #92d050 !important; font-weight: bold; }
+              .text-muted-pdf { color: #475569 !important; }
+              .text-footer-pdf { color: #64748b !important; }
             `}</style>
 
             <div className="flex justify-between items-start mb-6">
-               {/* CONTENEDOR DE FECHA DE EMISIÓN (SUPERIOR IZQUIERDA) */}
-               <div className="w-1/4 text-[10px] font-bold text-slate-600 uppercase pt-2">
+               {/* SE REEMPLAZA text-slate-600 POR UNA CLASE EN EL ESTILO LOCAL */}
+               <div className="w-1/4 text-[10px] font-bold uppercase pt-2 text-muted-pdf">
                  Fecha de Emisión:<br />
-                 <span className="font-mono text-xs">{getFormattedDate()}</span>
+                 <span className="font-mono text-xs" style={{ color: '#000000' }}>{getFormattedDate()}</span>
                </div>
                
-               <h2 className="text-center font-bold text-lg uppercase flex-1 px-4">reporte de resumen de costos de productos</h2>
+               <h2 className="text-center font-bold text-lg uppercase flex-1 px-4" style={{ color: '#000000' }}>
+                 reporte de resumen de costos de productos
+               </h2>
                
-               <div className="text-[10px] font-bold border border-black p-2 text-right w-1/4">
+               <div className="text-[10px] font-bold border border-black p-2 text-right w-1/4" style={{ borderColor: '#000000' }}>
                   TIPO DE CAMBIO APLICADO:<br/>
-                  <span className="text-sm font-mono">${currentTc.toFixed(2)}</span>
+                  <span className="text-sm font-mono" style={{ color: '#000000' }}>${currentTc.toFixed(2)}</span>
                </div>
             </div>
 
@@ -220,7 +229,8 @@ const ReporteColectivoViewer = () => {
               </tbody>
             </table>
             
-            <p className="mt-10 text-[9px] font-bold italic text-slate-500 uppercase">
+            {/* SE REEMPLAZA text-slate-500 POR OTRA CLASE EN EL ESTILO LOCAL */}
+            <p className="mt-10 text-[9px] font-bold italic uppercase text-footer-pdf">
               * Nota: Los valores en USD están calculados dinámicamente con base en el tipo de cambio de simulación activo.
             </p>
           </div>
