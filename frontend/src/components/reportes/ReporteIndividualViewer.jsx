@@ -23,7 +23,7 @@ const ReporteIndividualViewer = () => {
   // Filtrado dinámico de la lista de productos
   const piList = useMemo(() => {
     return productos.filter(p => {
-      const cumpleTipo = p.tipo_producto === 'PI';
+      const cumpleTipo = p.tipo_producto === 'PI' || p.tipo_producto === 'PT';
       if (!searchTerm) return cumpleTipo;
 
       const term = searchTerm.toLowerCase();
@@ -167,17 +167,19 @@ const ReporteIndividualViewer = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
           <select 
-            className="p-3 border border-slate-300 rounded-xl font-bold text-xs uppercase outline-none focus:ring-2 ring-emerald-500"
-            value={selectedProductId}
-            onChange={(e) => setSelectedProductId(e.target.value)}
-          >
-            <option value="">-- SELECCIONAR PRODUCTO ({piList.length}) --</option>
-            {piList.map(p => (
-              <option key={p.id_producto} value={p.id_producto}>
-                {p.clave_producto} - {p.descripcion_producto}
-              </option>
-            ))}
-          </select>
+  className="p-3 border border-slate-300 rounded-xl font-bold text-xs uppercase outline-none focus:ring-2 ring-emerald-500"
+  value={selectedProductId}
+  onChange={(e) => setSelectedProductId(e.target.value)}
+>
+  {/* Cambio en el texto de la opción por defecto */}
+  <option value="">-- SELECCIONAR PRODUCTO (PI/PT) ({piList.length}) --</option>
+  {piList.map(p => (
+    <option key={p.id_producto} value={p.id_producto}>
+      {/* Puedes agregar visualmente el tipo al lado para diferenciarlos en la lista */}
+      [{p.tipo_producto}] {p.clave_producto} - {p.descripcion_producto}
+    </option>
+  ))}
+</select>
 
           <div className="flex gap-2">
             <select 

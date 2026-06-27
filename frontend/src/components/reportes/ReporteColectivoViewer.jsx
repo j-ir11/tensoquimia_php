@@ -17,9 +17,10 @@ const ReporteColectivoViewer = () => {
   // Resolución del valor real del TC (por si viene como objeto o número)
   const currentTc = typeof tcActual === 'number' ? tcActual : (tcActual?.valor || 18.00);
 
-  const piFiltered = useMemo(() => {
+  // 🟢 MODIFICACIÓN: Filtrado adaptado para incluir tanto 'PI' como 'PT'
+  const productosFiltered = useMemo(() => {
     return productos.filter(p => 
-      p.tipo_producto === 'PI' && 
+      (p.tipo_producto === 'PI' || p.tipo_producto === 'PT') && 
       (p.descripcion_producto.toLowerCase().includes(searchTerm.toLowerCase()) || 
        p.clave_producto.toLowerCase().includes(searchTerm.toLowerCase()))
     );
@@ -123,7 +124,8 @@ const ReporteColectivoViewer = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {piFiltered.map(p => (
+                {/* 🟢 MODIFICACIÓN: Mapeo sobre el nuevo listado unificado */}
+                {productosFiltered.map(p => (
                   <tr 
                     key={p.id_producto} 
                     onClick={() => toggleProducto(p.id_producto)}
@@ -134,7 +136,13 @@ const ReporteColectivoViewer = () => {
                         {selectedIds.includes(p.id_producto) && <CheckCircle2 size={12} />}
                       </div>
                     </td>
-                    <td className="p-3 font-mono text-[10px] font-bold text-slate-600">{p.clave_producto}</td>
+                    <td className="p-3 font-mono text-[10px] font-bold text-slate-600">
+                      {p.clave_producto}
+                      {/* ⚡ Identificador visual añadido para distinguir tipos de producto rápidamente */}
+                      <span className={`ml-2 px-1.5 py-0.5 rounded text-[8px] font-sans font-black tracking-wide ${p.tipo_producto === 'PT' ? 'bg-indigo-100 text-indigo-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                        {p.tipo_producto}
+                      </span>
+                    </td>
                     <td className="p-3 text-[10px] font-black text-slate-700 uppercase">{p.descripcion_producto}</td>
                   </tr>
                 ))}
@@ -167,7 +175,6 @@ const ReporteColectivoViewer = () => {
 
       {reportes.length > 0 && !loading && (
         <div className="bg-slate-200 p-8 overflow-x-auto">
-          {/* SE QUITA shadow-2xl PORQUE LOS SOMBREADOS MODERNOS USAN OKLCH */}
           <div 
             id="reporte-colectivo-container" 
             className="mx-auto w-[210mm] relative"
@@ -183,7 +190,6 @@ const ReporteColectivoViewer = () => {
             `}</style>
 
             <div className="flex justify-between items-start mb-6">
-               {/* SE REEMPLAZA text-slate-600 POR UNA CLASE EN EL ESTILO LOCAL */}
                <div className="w-1/4 text-[10px] font-bold uppercase pt-2 text-muted-pdf">
                  Fecha de Emisión:<br />
                  <span className="font-mono text-xs" style={{ color: '#000000' }}>{getFormattedDate()}</span>
@@ -229,7 +235,6 @@ const ReporteColectivoViewer = () => {
               </tbody>
             </table>
             
-            {/* SE REEMPLAZA text-slate-500 POR OTRA CLASE EN EL ESTILO LOCAL */}
             <p className="mt-10 text-[9px] font-bold italic uppercase text-footer-pdf">
               * Nota: Los valores en USD están calculados dinámicamente con base en el tipo de cambio de simulación activo.
             </p>
