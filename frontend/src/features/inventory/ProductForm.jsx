@@ -158,6 +158,7 @@ const ProductForm = ({ mode = 'create', initialData = null, onCancel }) => {
                 <select name="tipo_producto" className="w-full bg-white border border-slate-300 p-3 text-xs font-bold uppercase outline-none rounded" value={formData.tipo_producto} onChange={handleInputChange}>
                   <option value="MP">MATERIA PRIMA (MP)</option>
                   <option value="PI">PRODUCTO INTERMEDIO (PI)</option>
+                  <option value="PT">PRODUCTO TERMINADO (PT)</option>
                 </select>
               </div>
               <div className="space-y-2">
