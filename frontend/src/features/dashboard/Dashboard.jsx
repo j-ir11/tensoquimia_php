@@ -12,7 +12,7 @@ const Dashboard = ({ onEdit, setCurrentView }) => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [productToDelete, setProductToDelete] = useState(null);
 
- useEffect(() => {
+  useEffect(() => {
     initialize();
   }, []);
 
@@ -37,6 +37,16 @@ const Dashboard = ({ onEdit, setCurrentView }) => {
   }, [filtered]);
 
   // ==========================================
+  // FUNCIÓN AUXILIAR PARA OBTENER EL TEXTO DEL TIPO
+  // ==========================================
+  const obtenerTextoTipo = (tipo) => {
+    if (tipo === "MP") return "MATERIA PRIMA";
+    if (tipo === "PI") return "PRODUCTO INTERMEDIO";
+    if (tipo === "PT") return "PRODUCTO TERMINADO";
+    return tipo;
+  };
+
+  // ==========================================
   // FUNCIÓN PARA EXPORTAR A EXCEL
   // ==========================================
   const handleExportExcel = () => {
@@ -46,7 +56,7 @@ const Dashboard = ({ onEdit, setCurrentView }) => {
     // Estructuramos las filas dependiendo de si está agrupado por familia o no
     if (groupByFamily) {
       Object.entries(families).forEach(([familyName, items]) => {
-        // Opcional: Agregar una fila separadora con el nombre del grupo
+        // Agregar una fila separadora con el nombre del grupo
         dataParaExcel.push({
           "Clave Producto": `--- GRUPO: ${familyName} ---`,
           "Descripción": "",
@@ -66,7 +76,7 @@ const Dashboard = ({ onEdit, setCurrentView }) => {
           dataParaExcel.push({
             "Clave Producto": p.clave_producto?.toUpperCase(),
             "Descripción": p.descripcion_producto?.toUpperCase(),
-            "Tipo": p.tipo_producto === "MP" ? "MATERIA PRIMA" : "PRODUCTO INTERMEDIO",
+            "Tipo": obtenerTextoTipo(p.tipo_producto), // <-- Ajuste aquí
             "Costo Base": costoBase,
             "Moneda": p.moneda?.toUpperCase(),
             "T.C.": tc,
@@ -85,7 +95,7 @@ const Dashboard = ({ onEdit, setCurrentView }) => {
         dataParaExcel.push({
           "Clave Producto": p.clave_producto?.toUpperCase(),
           "Descripción": p.descripcion_producto?.toUpperCase(),
-          "Tipo": p.tipo_producto === "MP" ? "MATERIA PRIMA" : "PRODUCTO INTERMEDIO",
+          "Tipo": obtenerTextoTipo(p.tipo_producto), // <-- Ajuste aquí
           "Costo Base": costoBase,
           "Moneda": p.moneda?.toUpperCase(),
           "T.C.": tc,
@@ -97,7 +107,7 @@ const Dashboard = ({ onEdit, setCurrentView }) => {
     // Crear el libro y la hoja de trabajo de Excel
     const worksheet = XLSX.utils.json_to_sheet(dataParaExcel);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Productos");
+    XXLSX.utils.book_append_sheet(workbook, worksheet, "Productos");
 
     // Ajustar anchos de columnas automáticamente para que se vea ordenado
     const max_widths = [
@@ -112,7 +122,7 @@ const Dashboard = ({ onEdit, setCurrentView }) => {
     worksheet["!cols"] = max_widths;
 
     // Descargar el archivo Excel generado
-    XLSX.writeFile(workbook, `Reporte_Tensoquimia_${new Date().toISOString().slice(0,10)}.xlsx`);
+    XXLSX.writeFile(workbook, `Reporte_Tensoquimia_${new Date().toISOString().slice(0,10)}.xlsx`);
   };
   // ==========================================
 
@@ -180,7 +190,7 @@ const Dashboard = ({ onEdit, setCurrentView }) => {
             className="w-full lg:w-auto px-6 py-2.5 bg-[#0f172a] hover:bg-emerald-600 text-white text-[10px] font-black uppercase rounded-lg shadow-lg hover:shadow-emerald-500/20 transition-all flex items-center justify-center gap-2"
           >
             <Plus size={16} strokeWidth={3} />
-            Agregar Producto (MP / PI)
+            Agregar Producto (MP / PI / PT) {/* <-- Actualizado */}
           </button>
         </div>
       </div>
@@ -224,6 +234,7 @@ const Dashboard = ({ onEdit, setCurrentView }) => {
                           tcActual={tcActual}
                           onEdit={onEdit}
                           onDelete={handleDeleteClick}
+                          obtenerTextoTipo={obtenerTextoTipo} // <-- Pasado por props
                         />
                       ))}
                     </React.Fragment>
@@ -235,6 +246,7 @@ const Dashboard = ({ onEdit, setCurrentView }) => {
                       tcActual={tcActual}
                       onEdit={onEdit}
                       onDelete={handleDeleteClick}
+                      obtenerTextoTipo={obtenerTextoTipo} // <-- Pasado por props
                     />
                   ))}
             </tbody>
@@ -257,7 +269,7 @@ const Dashboard = ({ onEdit, setCurrentView }) => {
   );
 };
 
-const DashboardRow = ({ producto, tcActual, onEdit, onDelete }) => {
+const DashboardRow = ({ producto, tcActual, onEdit, onDelete, obtenerTextoTipo }) => {
   const costoBase = parseFloat(producto.costo || 0);
   const tc = Number(tcActual || 18);
 
@@ -275,7 +287,7 @@ const DashboardRow = ({ producto, tcActual, onEdit, onDelete }) => {
       <td className="px-6 py-4 uppercase font-bold text-slate-700 tracking-tight truncate">
         {producto.descripcion_producto}
         <span className="block text-[9px] text-slate-400 font-normal mt-0.5 italic">
-          {producto.tipo_producto === "MP" ? "MATERIA PRIMA" : "PRODUCTO INTERMEDIO"}
+          {obtenerTextoTipo(producto.tipo_producto)} {/* <-- Lógica unificada para MP, PI y PT */}
         </span>
       </td>
 
