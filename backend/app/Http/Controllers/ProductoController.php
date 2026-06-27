@@ -59,40 +59,45 @@ class ProductoController extends Controller
         }
     }
 
-    public function updateProducto(Request $request, $id)
-    {
-        return DB::transaction(function () use ($request, $id) {
-            // 1. Obtener los datos del producto antes de actualizar para saber si era MP
-            $productoAntes = DB::table('productos')->where('id_producto', $id)->first();
+   public function updateProducto(Request $request, $id)
+{
+    return DB::transaction(function () use ($request, $id) {
+        // 1. Obtener los datos del producto antes de actualizar
+        $productoAntes = DB::table('productos')->where('id_producto', $id)->first();
+        
+        if (!$productoAntes) {
+            return response()->json(['message' => 'Producto no encontrado'], 404);
+        }
+
+        // 2. Ejecutar la actualización en el catálogo
+        DB::table('productos')
+            ->where('id_producto', $id)
+            ->update([
+                'clave_producto'        => $request->clave_producto,
+                'descripcion_producto'  => $request->descripcion_producto,
+                'tipo_producto'         => $request->tipo_producto,
+                'unidad_producto'       => $request->unidad_producto,
+                'familia_producto'      => $request->familia_producto,
+                'costo'                 => $request->costo,
+                'moneda'                => $request->moneda
+            ]);
+
+        // Limpiar caché inicial de costos
+        CalculoService::limpiarCacheCostos();
+
+        // 3. 🚀 DISPARADOR EN CASCADA EXTENDIDO
+        // Se activa si el producto afectado ERA o AHORA ES una Materia Prima (MP) o un Producto Intermedio (PI)
+        $tiposQueDisparanCascada = ['MP', 'PI'];
+
+        if (in_array($productoAntes->tipo_producto, $tiposQueDisparanCascada) || 
+            in_array($request->tipo_producto, $tiposQueDisparanCascada)) {
             
-            if (!$productoAntes) {
-                return response()->json(['message' => 'Producto no encontrado'], 404);
-            }
+            $this->propagarNuevasVersionesPorCascada((int)$id);
+        }
 
-            // 2. Ejecutar la actualización en el catálogo
-            DB::table('productos')
-                ->where('id_producto', $id)
-                ->update([
-                    'clave_producto'        => $request->clave_producto,
-                    'descripcion_producto'  => $request->descripcion_producto,
-                    'tipo_producto'         => $request->tipo_producto,
-                    'unidad_producto'       => $request->unidad_producto,
-                    'familia_producto'      => $request->familia_producto,
-                    'costo'                 => $request->costo,
-                    'moneda'                => $request->moneda
-                ]);
-
-            // Limpiar caché inicial de costos
-            CalculoService::limpiarCacheCostos();
-
-            // 3. 🚀 DISPARADOR EN CASCADA SI ES MATERIA PRIMA (MP)
-            if ($productoAntes->tipo_producto === 'MP' || $request->tipo_producto === 'MP') {
-                $this->propagarNuevasVersionesPorCascada((int)$id);
-            }
-
-            return response()->json(['message' => 'Ficha de producto y fórmulas afectadas actualizadas con éxito']);
-        });
-    }
+        return response()->json(['message' => 'Ficha de producto y fórmulas afectadas actualizadas con éxito']);
+    });
+}
 
     /**
      * 🔄 Método Auxiliar para propagar el efecto dominó hacia arriba (Modificado con Costo Histórico)
