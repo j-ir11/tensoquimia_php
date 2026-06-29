@@ -89,7 +89,7 @@ const Login = () => {
           
           <div className="bg-slate-50 p-4 border-t border-slate-100">
             <p className="text-[8px] text-center text-slate-400 font-bold uppercase tracking-widest leading-relaxed">
-              Propiedad del mismisimo uriel<br/>
+              <br/>
              
             </p>
           </div>
